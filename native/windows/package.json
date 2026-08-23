@@ -31,9 +31,13 @@
       "oneClick": true,
       "perMachine": false,
       "allowToChangeInstallationDirectory": false,
-      "createDesktopShortcut": true,
+      "createDesktopShortcut": "always",
       "createStartMenuShortcut": true,
-      "shortcutName": "Goa Voice"
+      "shortcutName": "Goa Voice",
+      "installerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "runAfterFinish": true
     }
   }
 }
