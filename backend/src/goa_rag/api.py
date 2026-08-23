@@ -56,12 +56,15 @@ app = FastAPI(
 )
 
 
+# Public hackathon API: no cookies/auth credentials are used by the browser.
+# Allow cross-origin requests so Vercel production/preview frontends can call
+# the Railway API directly without browser CORS failures.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.allowed_origins(),
+    allow_origins=["*"],
     allow_credentials=False,
-    allow_methods=["GET", "POST"],
-    allow_headers=["Content-Type"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
