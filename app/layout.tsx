@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
+import InstallAppButton from "@/components/InstallAppButton";
 import PwaBoot from "@/components/PwaBoot";
 import "./globals.css";
 
@@ -49,6 +50,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             </nav>
             <div className="header-actions">
               <span className="system-ready"><i /> Systems ready</span>
+              <InstallAppButton />
               <button className="avatar" aria-label="Account">PP</button>
             </div>
           </div>
