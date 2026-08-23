@@ -1,0 +1,34 @@
+{
+  "name": "goa-voice-windows",
+  "version": "0.1.0",
+  "private": true,
+  "main": "main.cjs",
+  "scripts": {
+    "dist": "electron-builder --win nsis"
+  },
+  "devDependencies": {
+    "electron": "^37.0.0",
+    "electron-builder": "^26.0.0"
+  },
+  "build": {
+    "appId": "com.goavoice.desktop",
+    "productName": "Goa Voice",
+    "artifactName": "GoaVoice-Setup-${version}.${ext}",
+    "files": [
+      "main.cjs"
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Goa Voice"
+    }
+  }
+}
