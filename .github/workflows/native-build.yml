@@ -1,0 +1,131 @@
+name: Build Goa Voice Native Apps
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "native/**"
+      - ".github/workflows/native-build.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  android:
+    name: Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Install Android shell dependencies
+        working-directory: native/android
+        run: npm install
+
+      - name: Generate Android project
+        working-directory: native/android
+        run: npx cap add android
+
+      - name: Add microphone permission
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path("native/android/android/app/src/main/AndroidManifest.xml")
+          text = path.read_text(encoding="utf-8")
+          permission = '<uses-permission android:name="android.permission.RECORD_AUDIO" />'
+          if permission not in text:
+              text = text.replace("<application", permission + "\n    <application", 1)
+          path.write_text(text, encoding="utf-8")
+
+      - name: Sync Capacitor
+        working-directory: native/android
+        run: npx cap sync android
+
+      - name: Build installable APK
+        working-directory: native/android/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Prepare Android artifact
+        run: |
+          mkdir -p release
+          cp native/android/android/app/build/outputs/apk/debug/app-debug.apk release/GoaVoice.apk
+
+      - name: Upload Android APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: GoaVoice-Android
+          path: release/GoaVoice.apk
+
+  windows:
+    name: Windows EXE
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Windows shell dependencies
+        working-directory: native/windows
+        run: npm install
+
+      - name: Build Windows installer
+        working-directory: native/windows
+        run: npm run dist
+
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: GoaVoice-Windows
+          path: native/windows/dist/GoaVoice-Setup-*.exe
+
+  release:
+    name: Publish Native Downloads
+    needs: [android, windows]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Android artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: GoaVoice-Android
+          path: release
+
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: GoaVoice-Windows
+          path: release
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: native-v0.1.${{ github.run_number }}
+          name: Goa Voice Native v0.1.${{ github.run_number }}
+          body: |
+            Installable Goa Voice native builds.
+
+            - Android: GoaVoice.apk
+            - Windows: GoaVoice-Setup-0.1.0.exe
+
+            Both clients connect to the production Goa Voice service.
+          files: |
+            release/GoaVoice.apk
+            release/GoaVoice-Setup-*.exe
+          make_latest: true
