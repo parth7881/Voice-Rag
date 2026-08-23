@@ -4,13 +4,14 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import styles from "./InstallAppButton.module.css";
 
-const ANDROID_APK_URL = "https://github.com/parth7881/Voice-Rag/releases/latest/download/GoaVoice.apk";
 const WINDOWS_EXE_URL = "https://github.com/parth7881/Voice-Rag/releases/latest/download/GoaVoice-Setup-0.1.0.exe";
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
 };
+
+type Platform = "android" | "windows" | "ios" | "mac" | "other";
 
 type InstallHelp = {
   title: string;
@@ -21,12 +22,8 @@ type InstallHelp = {
 
 function isStandalone(): boolean {
   if (typeof window === "undefined") return false;
-
   const nav = navigator as Navigator & { standalone?: boolean };
-  return (
-    window.matchMedia("(display-mode: standalone)").matches ||
-    nav.standalone === true
-  );
+  return window.matchMedia("(display-mode: standalone)").matches || nav.standalone === true;
 }
 
 function isNativeClient(): boolean {
@@ -34,81 +31,53 @@ function isNativeClient(): boolean {
   return /GoaVoiceNative\/(Android|Windows)/i.test(navigator.userAgent);
 }
 
-function getInstallHelp(): InstallHelp {
+function getPlatform(): Platform {
   const ua = navigator.userAgent;
-  const isIOS = /iPhone|iPad|iPod/i.test(ua);
-  const isAndroid = /Android/i.test(ua);
-  const isMac = /Macintosh|Mac OS X/i.test(ua);
-  const isSafari = /Safari/i.test(ua) && !/Chrome|CriOS|Edg|OPR|Firefox|FxiOS/i.test(ua);
-  const isChrome = /Chrome|CriOS/i.test(ua) && !/Edg|OPR/i.test(ua);
-  const isEdge = /Edg/i.test(ua);
+  if (/Android/i.test(ua)) return "android";
+  if (/Windows/i.test(ua)) return "windows";
+  if (/iPhone|iPad|iPod/i.test(ua)) return "ios";
+  if (/Macintosh|Mac OS X/i.test(ua)) return "mac";
+  return "other";
+}
 
-  if (isIOS) {
+function getManualHelp(platform: Platform): InstallHelp {
+  if (platform === "ios") {
     return {
       title: "Install Goa Voice",
-      intro: "iPhone and iPad do not install Android APK files. Use Safari to add Goa Voice as a Home Screen web app.",
+      intro: "Install Goa Voice from Safari as a Home Screen app.",
       steps: [
         "Open this website in Safari.",
-        "Tap the Share button in Safari.",
+        "Tap the Share button.",
         "Choose Add to Home Screen.",
         "Turn on Open as Web App if shown, then tap Add."
       ],
-      note: "A separate native iOS IPA/App Store build requires Apple signing and can be added later."
+      note: "iPhone and iPad use Apple's Home Screen installation flow."
     };
   }
 
-  if (isMac && isSafari) {
+  if (platform === "mac") {
     return {
       title: "Install Goa Voice",
-      intro: "Safari on macOS can save this website as an app in your Dock.",
+      intro: "Safari on macOS can save Goa Voice as an app in your Dock.",
       steps: [
         "Open this website in Safari.",
-        "From the menu bar, choose File.",
+        "Choose File from the menu bar.",
         "Choose Add to Dock.",
-        "Confirm the app name and add it."
+        "Confirm the app name."
       ],
-      note: "A separate signed macOS package can be added later if needed."
-    };
-  }
-
-  if (isAndroid) {
-    return {
-      title: "Install Goa Voice",
-      intro: "For a real Android app, use the APK download below. You can also install the PWA from your browser.",
-      steps: [
-        "Tap Download Android APK below.",
-        "Open the downloaded GoaVoice.apk file.",
-        "If Android asks, allow installs from this browser or file manager.",
-        "Tap Install, then open Goa Voice from your app drawer."
-      ],
-      note: "The APK is built from the same production Goa Voice code path and connects to the same live backend."
-    };
-  }
-
-  if (isChrome || isEdge || /Windows/i.test(ua)) {
-    return {
-      title: "Install Goa Voice",
-      intro: "For a real Windows desktop app, download the installer below. Browser PWA installation remains available too.",
-      steps: [
-        "Click Download Windows EXE below.",
-        "Open GoaVoice-Setup-0.1.0.exe.",
-        "Complete the installer.",
-        "Launch Goa Voice from the Desktop or Start menu."
-      ],
-      note: "The first unsigned hackathon build may trigger a Windows SmartScreen warning. Code signing can remove that warning in a production release."
+      note: "Chrome can also offer its own web-app install prompt when available."
     };
   }
 
   return {
     title: "Install Goa Voice",
-    intro: "Choose a native download below, or install the PWA from a supported browser.",
+    intro: "Your browser is not exposing a one-tap app install prompt right now.",
     steps: [
-      "Android users can download the APK.",
-      "Windows users can download the EXE installer.",
-      "Chrome, Edge, and Safari can also install Goa Voice as a web app.",
-      "Use the build that matches your device."
+      "Open this site in a current Chrome, Edge, or Safari browser.",
+      "Use the browser's Install app or Add to Home Screen option.",
+      "Confirm the installation."
     ],
-    note: "Android APK and Windows EXE use the same production Goa Voice service."
+    note: "The website remains fully usable even when browser installation is unavailable."
   };
 }
 
@@ -124,23 +93,37 @@ function DownloadIcon() {
 
 export default function InstallAppButton() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [platform, setPlatform] = useState<Platform | null>(null);
   const [help, setHelp] = useState<InstallHelp | null>(null);
   const [mounted, setMounted] = useState(false);
-  const [hideInstall, setHideInstall] = useState(true);
+  const [hidden, setHidden] = useState(true);
 
   useEffect(() => {
     setMounted(true);
-    setHideInstall(isStandalone() || isNativeClient());
+
+    const detectedPlatform = getPlatform();
+    setPlatform(detectedPlatform);
+
+    const installed = isStandalone() || isNativeClient();
+    if (installed) {
+      setHidden(true);
+    } else {
+      // Windows gets the native EXE download immediately. iOS/macOS use
+      // platform-specific manual guidance. Android appears only when Chrome
+      // exposes a real beforeinstallprompt event, guaranteeing Install/Cancel.
+      setHidden(detectedPlatform === "android");
+    }
 
     const onBeforeInstall = (event: Event) => {
       event.preventDefault();
       setDeferredPrompt(event as BeforeInstallPromptEvent);
+      if (!isStandalone() && !isNativeClient()) setHidden(false);
     };
 
     const onInstalled = () => {
       setDeferredPrompt(null);
       setHelp(null);
-      setHideInstall(true);
+      setHidden(true);
     };
 
     window.addEventListener("beforeinstallprompt", onBeforeInstall);
@@ -171,21 +154,37 @@ export default function InstallAppButton() {
   }, [help]);
 
   async function install() {
-    if (deferredPrompt && !isStandalone()) {
+    if (!platform) return;
+
+    if (platform === "windows") {
+      const link = document.createElement("a");
+      link.href = WINDOWS_EXE_URL;
+      link.rel = "noopener";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      return;
+    }
+
+    if (deferredPrompt) {
       try {
         await deferredPrompt.prompt();
         const choice = await deferredPrompt.userChoice;
         setDeferredPrompt(null);
-        if (choice.outcome === "accepted") return;
+        if (choice.outcome === "accepted") setHidden(true);
       } catch {
-        // Native/PWA download dialog below remains available.
+        // If the browser invalidates the event, wait for a future install event.
       }
+      return;
     }
 
-    setHelp(getInstallHelp());
+    // Android button is never shown without a real browser install event.
+    if (platform === "android") return;
+
+    setHelp(getManualHelp(platform));
   }
 
-  if (!mounted || hideInstall) return null;
+  if (!mounted || hidden || !platform) return null;
 
   const modal = help ? (
     <div className={styles.overlay} role="presentation" onMouseDown={() => setHelp(null)}>
@@ -197,7 +196,7 @@ export default function InstallAppButton() {
         onMouseDown={(event) => event.stopPropagation()}
       >
         <div className={styles.dialogTopBar}>
-          <span className={styles.kicker}>GOA VOICE NATIVE APP</span>
+          <span className={styles.kicker}>GOA VOICE APP</span>
           <button className={styles.closeButton} type="button" onClick={() => setHelp(null)} aria-label="Close install instructions">
             ×
           </button>
@@ -206,18 +205,6 @@ export default function InstallAppButton() {
         <div className={styles.dialogBody}>
           <h2 id="install-dialog-title">{help.title}</h2>
           <p>{help.intro}</p>
-
-          <div className={styles.nativeDownloads}>
-            <a className={styles.nativeDownload} href={ANDROID_APK_URL}>
-              <strong>Android</strong>
-              <span>Download APK</span>
-            </a>
-            <a className={styles.nativeDownload} href={WINDOWS_EXE_URL}>
-              <strong>Windows</strong>
-              <span>Download EXE</span>
-            </a>
-          </div>
-
           <ol className={styles.steps}>
             {help.steps.map((step) => <li key={step}>{step}</li>)}
           </ol>
@@ -233,13 +220,14 @@ export default function InstallAppButton() {
     </div>
   ) : null;
 
+  const label = platform === "windows" ? "Download Setup" : "Install App";
+
   return (
     <>
-      <button className={styles.installButton} type="button" onClick={() => void install()} aria-label="Download or install Goa Voice app">
+      <button className={styles.installButton} type="button" onClick={() => void install()} aria-label={label}>
         <DownloadIcon />
-        <span>Install App</span>
+        <span>{label}</span>
       </button>
-
       {modal ? createPortal(modal, document.body) : null}
     </>
   );
