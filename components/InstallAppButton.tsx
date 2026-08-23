@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import styles from "./InstallAppButton.module.css";
 
+const ANDROID_APK_URL = "https://github.com/parth7881/Voice-Rag/releases/latest/download/GoaVoice.apk";
+const WINDOWS_EXE_URL = "https://github.com/parth7881/Voice-Rag/releases/latest/download/GoaVoice-Setup-0.1.0.exe";
+
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
@@ -37,14 +40,14 @@ function getInstallHelp(): InstallHelp {
   if (isIOS) {
     return {
       title: "Install Goa Voice",
-      intro: "On iPhone or iPad, install Goa Voice from Safari as a Home Screen web app.",
+      intro: "iPhone and iPad do not install Android APK files. Use Safari to add Goa Voice as a Home Screen web app.",
       steps: [
         "Open this website in Safari.",
         "Tap the Share button in Safari.",
         "Choose Add to Home Screen.",
         "Turn on Open as Web App if shown, then tap Add."
       ],
-      note: "Apple does not provide the same automatic install prompt used by Chromium browsers, so this short Safari flow is required."
+      note: "A separate native iOS IPA/App Store build requires Apple signing and can be added later."
     };
   }
 
@@ -58,48 +61,48 @@ function getInstallHelp(): InstallHelp {
         "Choose Add to Dock.",
         "Confirm the app name and add it."
       ],
-      note: "Once added, Goa Voice opens in its own app-style window."
+      note: "A separate signed macOS package can be added later if needed."
     };
   }
 
   if (isAndroid) {
     return {
       title: "Install Goa Voice",
-      intro: "Your browser did not expose the one-tap install prompt right now. You can still install it from the browser menu.",
+      intro: "For a real Android app, use the APK download below. You can also install the PWA from your browser.",
       steps: [
-        "Open the browser menu (usually ⋮).",
-        "Choose Install app or Add to Home screen.",
-        "Confirm Install.",
-        "Open Goa Voice from your Home Screen like a normal app."
+        "Tap Download Android APK below.",
+        "Open the downloaded GoaVoice.apk file.",
+        "If Android asks, allow installs from this browser or file manager.",
+        "Tap Install, then open Goa Voice from your app drawer."
       ],
-      note: "Install wording varies by Android browser. Chrome and Edge usually show Install app when the site is eligible."
+      note: "The APK is built from the same production Goa Voice code path and connects to the same live backend."
     };
   }
 
-  if (isChrome || isEdge) {
+  if (isChrome || isEdge || /Windows/i.test(ua)) {
     return {
       title: "Install Goa Voice",
-      intro: "Install Goa Voice on your computer as a standalone web app.",
+      intro: "For a real Windows desktop app, download the installer below. Browser PWA installation remains available too.",
       steps: [
-        "Open the browser menu.",
-        "Choose Install Goa Voice, Install app, or Apps → Install this site as an app.",
-        "Confirm Install.",
-        "Launch it from your desktop, Start menu, or app launcher."
+        "Click Download Windows EXE below.",
+        "Open GoaVoice-Setup-0.1.0.exe.",
+        "Complete the installer.",
+        "Launch Goa Voice from the Desktop or Start menu."
       ],
-      note: "The exact menu label can differ between Chrome and Edge versions."
+      note: "The first unsigned hackathon build may trigger a Windows SmartScreen warning. Code signing can remove that warning in a production release."
     };
   }
 
   return {
     title: "Install Goa Voice",
-    intro: "This browser does not currently expose a direct PWA install prompt.",
+    intro: "Choose a native download below, or install the PWA from a supported browser.",
     steps: [
-      "Open this page in current Chrome, Edge, or Safari.",
-      "Use the browser's Install app, Add to Home Screen, or Add to Dock option.",
-      "Confirm the installation.",
-      "Launch Goa Voice from your device like an app."
+      "Android users can download the APK.",
+      "Windows users can download the EXE installer.",
+      "Chrome, Edge, and Safari can also install Goa Voice as a web app.",
+      "Use the build that matches your device."
     ],
-    note: "Goa Voice remains fully usable as a normal website even when installation is unavailable in a particular browser."
+    note: "Android APK and Windows EXE use the same production Goa Voice service."
   };
 }
 
@@ -129,7 +132,6 @@ export default function InstallAppButton() {
     const onInstalled = () => {
       setInstalled(true);
       setDeferredPrompt(null);
-      setHelp(null);
     };
 
     window.addEventListener("beforeinstallprompt", onBeforeInstall);
@@ -142,28 +144,13 @@ export default function InstallAppButton() {
   }, []);
 
   async function install() {
-    if (installed || isStandalone()) {
-      setInstalled(true);
-      setHelp({
-        title: "Goa Voice is installed",
-        intro: "This device is already running Goa Voice as an installed web app.",
-        steps: ["Close this message and continue using the app."],
-        note: "You can reopen Goa Voice later from your Home Screen, desktop, Start menu, Dock, or app launcher."
-      });
-      return;
-    }
-
-    if (deferredPrompt) {
+    if (deferredPrompt && !installed && !isStandalone()) {
       try {
         await deferredPrompt.prompt();
-        const choice = await deferredPrompt.userChoice;
+        await deferredPrompt.userChoice;
         setDeferredPrompt(null);
-
-        if (choice.outcome === "accepted") {
-          return;
-        }
       } catch {
-        // Fall through to browser-specific manual instructions.
+        // Native/PWA download dialog below remains available.
       }
     }
 
@@ -172,9 +159,9 @@ export default function InstallAppButton() {
 
   return (
     <>
-      <button className={styles.installButton} type="button" onClick={() => void install()} aria-label="Install Goa Voice app">
+      <button className={styles.installButton} type="button" onClick={() => void install()} aria-label="Download or install Goa Voice app">
         <DownloadIcon />
-        <span>{installed ? "Installed" : "Install App"}</span>
+        <span>{installed ? "App Options" : "Install App"}</span>
       </button>
 
       {help ? (
@@ -189,9 +176,21 @@ export default function InstallAppButton() {
             <button className={styles.closeButton} type="button" onClick={() => setHelp(null)} aria-label="Close install instructions">
               ×
             </button>
-            <span className={styles.kicker}>GOA VOICE APP</span>
+            <span className={styles.kicker}>GOA VOICE NATIVE APP</span>
             <h2 id="install-dialog-title">{help.title}</h2>
             <p>{help.intro}</p>
+
+            <div className={styles.nativeDownloads}>
+              <a className={styles.nativeDownload} href={ANDROID_APK_URL}>
+                <strong>Android</strong>
+                <span>Download APK</span>
+              </a>
+              <a className={styles.nativeDownload} href={WINDOWS_EXE_URL}>
+                <strong>Windows</strong>
+                <span>Download EXE</span>
+              </a>
+            </div>
+
             <ol className={styles.steps}>
               {help.steps.map((step) => <li key={step}>{step}</li>)}
             </ol>
