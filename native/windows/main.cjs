@@ -1,6 +1,8 @@
+const path = require('path');
 const { app, BrowserWindow, session, shell } = require('electron');
 
 const APP_URL = 'https://voice-rag-rho.vercel.app';
+const NATIVE_USER_AGENT_SUFFIX = 'GoaVoiceNative/Windows';
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -11,6 +13,7 @@ function createWindow() {
     autoHideMenuBar: true,
     backgroundColor: '#fff9e9',
     title: 'Goa Voice',
+    icon: path.join(__dirname, 'build', 'icon.ico'),
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
@@ -23,6 +26,8 @@ function createWindow() {
     return { action: 'deny' };
   });
 
+  const defaultUserAgent = win.webContents.getUserAgent();
+  win.webContents.setUserAgent(`${defaultUserAgent} ${NATIVE_USER_AGENT_SUFFIX}`);
   win.loadURL(APP_URL);
 }
 
