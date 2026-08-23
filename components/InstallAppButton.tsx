@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import styles from "./InstallAppButton.module.css";
 
 const ANDROID_APK_URL = "https://github.com/parth7881/Voice-Rag/releases/latest/download/GoaVoice.apk";
@@ -120,8 +121,10 @@ export default function InstallAppButton() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [installed, setInstalled] = useState(false);
   const [help, setHelp] = useState<InstallHelp | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     setInstalled(isStandalone());
 
     const onBeforeInstall = (event: Event) => {
@@ -143,6 +146,24 @@ export default function InstallAppButton() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!help) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setHelp(null);
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [help]);
+
   async function install() {
     if (deferredPrompt && !installed && !isStandalone()) {
       try {
@@ -157,6 +178,52 @@ export default function InstallAppButton() {
     setHelp(getInstallHelp());
   }
 
+  const modal = help ? (
+    <div className={styles.overlay} role="presentation" onMouseDown={() => setHelp(null)}>
+      <section
+        className={styles.dialog}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="install-dialog-title"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <div className={styles.dialogTopBar}>
+          <span className={styles.kicker}>GOA VOICE NATIVE APP</span>
+          <button className={styles.closeButton} type="button" onClick={() => setHelp(null)} aria-label="Close install instructions">
+            ×
+          </button>
+        </div>
+
+        <div className={styles.dialogBody}>
+          <h2 id="install-dialog-title">{help.title}</h2>
+          <p>{help.intro}</p>
+
+          <div className={styles.nativeDownloads}>
+            <a className={styles.nativeDownload} href={ANDROID_APK_URL}>
+              <strong>Android</strong>
+              <span>Download APK</span>
+            </a>
+            <a className={styles.nativeDownload} href={WINDOWS_EXE_URL}>
+              <strong>Windows</strong>
+              <span>Download EXE</span>
+            </a>
+          </div>
+
+          <ol className={styles.steps}>
+            {help.steps.map((step) => <li key={step}>{step}</li>)}
+          </ol>
+          <p className={styles.note}>{help.note}</p>
+        </div>
+
+        <div className={styles.dialogFooter}>
+          <button className={styles.doneButton} type="button" onClick={() => setHelp(null)}>
+            Close
+          </button>
+        </div>
+      </section>
+    </div>
+  ) : null;
+
   return (
     <>
       <button className={styles.installButton} type="button" onClick={() => void install()} aria-label="Download or install Goa Voice app">
@@ -164,40 +231,7 @@ export default function InstallAppButton() {
         <span>{installed ? "App Options" : "Install App"}</span>
       </button>
 
-      {help ? (
-        <div className={styles.overlay} role="presentation" onMouseDown={() => setHelp(null)}>
-          <section
-            className={styles.dialog}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="install-dialog-title"
-            onMouseDown={(event) => event.stopPropagation()}
-          >
-            <button className={styles.closeButton} type="button" onClick={() => setHelp(null)} aria-label="Close install instructions">
-              ×
-            </button>
-            <span className={styles.kicker}>GOA VOICE NATIVE APP</span>
-            <h2 id="install-dialog-title">{help.title}</h2>
-            <p>{help.intro}</p>
-
-            <div className={styles.nativeDownloads}>
-              <a className={styles.nativeDownload} href={ANDROID_APK_URL}>
-                <strong>Android</strong>
-                <span>Download APK</span>
-              </a>
-              <a className={styles.nativeDownload} href={WINDOWS_EXE_URL}>
-                <strong>Windows</strong>
-                <span>Download EXE</span>
-              </a>
-            </div>
-
-            <ol className={styles.steps}>
-              {help.steps.map((step) => <li key={step}>{step}</li>)}
-            </ol>
-            <p className={styles.note}>{help.note}</p>
-          </section>
-        </div>
-      ) : null}
+      {mounted && modal ? createPortal(modal, document.body) : null}
     </>
   );
 }
