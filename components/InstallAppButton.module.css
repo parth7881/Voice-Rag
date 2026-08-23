@@ -1,0 +1,180 @@
+.installButton {
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid rgba(6, 63, 49, 0.22);
+  border-radius: 999px;
+  background: #fff9e9;
+  color: #043629;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(5, 58, 43, 0.06);
+  transition: transform 160ms ease, background 160ms ease, border-color 160ms ease;
+}
+
+.installButton:hover {
+  transform: translateY(-1px);
+  background: #ffffff;
+  border-color: rgba(6, 63, 49, 0.38);
+}
+
+.installButton:focus-visible {
+  outline: 3px solid rgba(242, 11, 120, 0.3);
+  outline-offset: 2px;
+}
+
+.installButton svg {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(2, 27, 21, 0.56);
+  backdrop-filter: blur(7px);
+}
+
+.dialog {
+  width: min(460px, 100%);
+  max-height: min(680px, calc(100dvh - 32px));
+  overflow-y: auto;
+  position: relative;
+  padding: 28px;
+  border: 1px solid rgba(6, 63, 49, 0.14);
+  border-radius: 24px;
+  background: #fffdf7;
+  color: #163c34;
+  box-shadow: 0 28px 90px rgba(0, 42, 31, 0.26);
+}
+
+.closeButton {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(6, 63, 49, 0.12);
+  border-radius: 50%;
+  background: #ffffff;
+  color: #043629;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.kicker {
+  display: block;
+  margin: 0 48px 10px 0;
+  color: #f20b78;
+  font: 800 9px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.dialog h2 {
+  margin: 0;
+  color: #043629;
+  font: 500 34px/1.05 Georgia, "Times New Roman", serif;
+  letter-spacing: -0.035em;
+}
+
+.dialog p {
+  margin: 12px 0 0;
+  color: #526a61;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.steps {
+  margin: 22px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 11px;
+  counter-reset: install-step;
+}
+
+.steps li {
+  counter-increment: install-step;
+  display: grid;
+  grid-template-columns: 30px 1fr;
+  gap: 10px;
+  align-items: start;
+  color: #26483f;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.steps li::before {
+  content: counter(install-step, decimal-leading-zero);
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: #08663c;
+  color: #ffffff;
+  font: 800 9px/1 ui-monospace, monospace;
+}
+
+.note {
+  margin-top: 20px !important;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 217, 31, 0.65);
+  border-radius: 12px;
+  background: rgba(255, 217, 31, 0.12);
+  color: #405a51 !important;
+}
+
+@media (max-width: 580px) {
+  .installButton {
+    min-height: 35px;
+    padding: 0 10px;
+    gap: 5px;
+    font-size: 10px;
+  }
+
+  .installButton svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .dialog {
+    padding: 25px 20px 22px;
+    border-radius: 21px;
+  }
+
+  .dialog h2 {
+    font-size: 30px;
+  }
+}
+
+@media (max-width: 360px) {
+  .installButton span {
+    display: none;
+  }
+
+  .installButton {
+    width: 35px;
+    padding: 0;
+  }
+}
