@@ -4,12 +4,8 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import styles from "./InstallAppButton.module.css";
 
+const ANDROID_APK_URL = "https://github.com/parth7881/Voice-Rag/releases/latest/download/GoaVoice.apk";
 const WINDOWS_EXE_URL = "https://github.com/parth7881/Voice-Rag/releases/latest/download/GoaVoice-Setup-0.1.0.exe";
-
-type BeforeInstallPromptEvent = Event & {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
-};
 
 type Platform = "android" | "windows" | "ios" | "mac" | "other";
 
@@ -19,12 +15,6 @@ type InstallHelp = {
   steps: string[];
   note: string;
 };
-
-function isStandalone(): boolean {
-  if (typeof window === "undefined") return false;
-  const nav = navigator as Navigator & { standalone?: boolean };
-  return window.matchMedia("(display-mode: standalone)").matches || nav.standalone === true;
-}
 
 function isNativeClient(): boolean {
   if (typeof navigator === "undefined") return false;
@@ -71,10 +61,10 @@ function getManualHelp(platform: Platform): InstallHelp {
 
   return {
     title: "Install Goa Voice",
-    intro: "Your browser is not exposing a one-tap app install prompt right now.",
+    intro: "Use a supported browser to install Goa Voice.",
     steps: [
       "Open this site in a current Chrome, Edge, or Safari browser.",
-      "Use the browser's Install app or Add to Home Screen option.",
+      "Use the browser's installation option when available.",
       "Confirm the installation."
     ],
     note: "The website remains fully usable even when browser installation is unavailable."
@@ -91,8 +81,16 @@ function DownloadIcon() {
   );
 }
 
+function downloadFile(url: string) {
+  const link = document.createElement("a");
+  link.href = url;
+  link.rel = "noopener";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+}
+
 export default function InstallAppButton() {
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [platform, setPlatform] = useState<Platform | null>(null);
   const [help, setHelp] = useState<InstallHelp | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -100,39 +98,17 @@ export default function InstallAppButton() {
 
   useEffect(() => {
     setMounted(true);
+    setPlatform(getPlatform());
+    setHidden(isNativeClient());
 
-    const detectedPlatform = getPlatform();
-    setPlatform(detectedPlatform);
-
-    const installed = isStandalone() || isNativeClient();
-    if (installed) {
-      setHidden(true);
-    } else {
-      // Windows gets the native EXE download immediately. iOS/macOS use
-      // platform-specific manual guidance. Android appears only when Chrome
-      // exposes a real beforeinstallprompt event, guaranteeing Install/Cancel.
-      setHidden(detectedPlatform === "android");
-    }
-
+    // Prevent Chromium from replacing our real-APK download flow with a PWA
+    // shortcut install prompt. Android website users should receive GoaVoice.apk.
     const onBeforeInstall = (event: Event) => {
       event.preventDefault();
-      setDeferredPrompt(event as BeforeInstallPromptEvent);
-      if (!isStandalone() && !isNativeClient()) setHidden(false);
-    };
-
-    const onInstalled = () => {
-      setDeferredPrompt(null);
-      setHelp(null);
-      setHidden(true);
     };
 
     window.addEventListener("beforeinstallprompt", onBeforeInstall);
-    window.addEventListener("appinstalled", onInstalled);
-
-    return () => {
-      window.removeEventListener("beforeinstallprompt", onBeforeInstall);
-      window.removeEventListener("appinstalled", onInstalled);
-    };
+    return () => window.removeEventListener("beforeinstallprompt", onBeforeInstall);
   }, []);
 
   useEffect(() => {
@@ -153,33 +129,18 @@ export default function InstallAppButton() {
     };
   }, [help]);
 
-  async function install() {
+  function install() {
     if (!platform) return;
 
+    if (platform === "android") {
+      downloadFile(ANDROID_APK_URL);
+      return;
+    }
+
     if (platform === "windows") {
-      const link = document.createElement("a");
-      link.href = WINDOWS_EXE_URL;
-      link.rel = "noopener";
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      downloadFile(WINDOWS_EXE_URL);
       return;
     }
-
-    if (deferredPrompt) {
-      try {
-        await deferredPrompt.prompt();
-        const choice = await deferredPrompt.userChoice;
-        setDeferredPrompt(null);
-        if (choice.outcome === "accepted") setHidden(true);
-      } catch {
-        // If the browser invalidates the event, wait for a future install event.
-      }
-      return;
-    }
-
-    // Android button is never shown without a real browser install event.
-    if (platform === "android") return;
 
     setHelp(getManualHelp(platform));
   }
@@ -220,11 +181,11 @@ export default function InstallAppButton() {
     </div>
   ) : null;
 
-  const label = platform === "windows" ? "Download Setup" : "Install App";
+  const label = platform === "windows" ? "Download Setup" : platform === "android" ? "Download App" : "Install App";
 
   return (
     <>
-      <button className={styles.installButton} type="button" onClick={() => void install()} aria-label={label}>
+      <button className={styles.installButton} type="button" onClick={install} aria-label={label}>
         <DownloadIcon />
         <span>{label}</span>
       </button>
