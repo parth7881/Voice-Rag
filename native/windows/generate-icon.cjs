@@ -1,9 +1,9 @@
 const fs = require('fs');
 const path = require('path');
 const sharp = require('sharp');
-const pngToIco = require('png-to-ico');
 
 async function main() {
+  const { default: pngToIco } = await import('png-to-ico');
   const source = path.resolve(__dirname, '../../public/app-icon.svg');
   const buildDir = path.resolve(__dirname, 'build');
   fs.mkdirSync(buildDir, { recursive: true });
