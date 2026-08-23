@@ -9,7 +9,8 @@ const config: CapacitorConfig = {
     cleartext: false
   },
   android: {
-    allowMixedContent: false
+    allowMixedContent: false,
+    appendUserAgent: 'GoaVoiceNative/Android'
   }
 };
 
