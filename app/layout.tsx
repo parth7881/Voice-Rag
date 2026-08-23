@@ -9,6 +9,11 @@ export const metadata: Metadata = {
   description: "A multilingual voice-first RAG experience built for HH Goa 2026.",
   applicationName: "Goa Voice",
   manifest: "/manifest.webmanifest",
+  icons: {
+    icon: [{ url: "/app-icon.svg", type: "image/svg+xml" }],
+    shortcut: "/app-icon.svg",
+    apple: "/app-icon.svg"
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -28,7 +33,7 @@ export const viewport: Viewport = {
 function Brand() {
   return (
     <Link className="brand" href="/" aria-label="Goa Voice home">
-      <span className="brand-mark" aria-hidden="true"><b>G</b><i /></span>
+      <img className="brand-logo" src="/app-icon.svg" alt="" aria-hidden="true" />
       <span className="brand-copy">
         <strong>Goa Voice</strong>
         <small>Multilingual RAG</small>
@@ -46,12 +51,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <div className="shell header-inner">
             <Brand />
             <nav className="nav" aria-label="Primary navigation">
-              <Link href="/">Ask</Link>
+              <Link href="/" aria-current="page">Ask</Link>
             </nav>
             <div className="header-actions">
               <span className="system-ready"><i /> Systems ready</span>
               <InstallAppButton />
-              <button className="avatar" aria-label="Account">PP</button>
             </div>
           </div>
           <div className="goa-stripe" aria-hidden="true" />
