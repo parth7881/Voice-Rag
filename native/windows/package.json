@@ -4,20 +4,25 @@
   "private": true,
   "main": "main.cjs",
   "scripts": {
-    "dist": "electron-builder --win nsis"
+    "prepare-icon": "node generate-icon.cjs",
+    "dist": "npm run prepare-icon && electron-builder --win nsis"
   },
   "devDependencies": {
     "electron": "^37.0.0",
-    "electron-builder": "^26.0.0"
+    "electron-builder": "^26.0.0",
+    "png-to-ico": "^3.0.1",
+    "sharp": "^0.34.5"
   },
   "build": {
     "appId": "com.goavoice.desktop",
     "productName": "Goa Voice",
     "artifactName": "GoaVoice-Setup-${version}.${ext}",
     "files": [
-      "main.cjs"
+      "main.cjs",
+      "build/icon.ico"
     ],
     "win": {
+      "icon": "build/icon.ico",
       "target": [
         "nsis"
       ]
