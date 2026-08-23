@@ -134,6 +134,15 @@ body .home-page .receipt-stamp {
   outline: none;
 }
 
+/* Make the suggestion section label visually proportional to the UI. */
+.try-label {
+  color: #176b57 !important;
+  font-size: 14px !important;
+  line-height: 1.2 !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.015em !important;
+}
+
 button:focus-visible,
 a:focus-visible,
 select:focus-visible,
@@ -232,6 +241,10 @@ input:focus-visible {
     min-height: 30px;
     padding: 6px 10px;
     font-size: 10px;
+  }
+
+  .try-label {
+    font-size: 13.5px !important;
   }
 }
 
