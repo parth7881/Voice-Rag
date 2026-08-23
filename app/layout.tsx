@@ -3,6 +3,7 @@ import Link from "next/link";
 import InstallAppButton from "@/components/InstallAppButton";
 import PwaBoot from "@/components/PwaBoot";
 import "./globals.css";
+import "./polish.css";
 
 export const metadata: Metadata = {
   title: "Goa Voice — Multilingual RAG",
