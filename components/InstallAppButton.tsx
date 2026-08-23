@@ -29,6 +29,11 @@ function isStandalone(): boolean {
   );
 }
 
+function isNativeClient(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return /GoaVoiceNative\/(Android|Windows)/i.test(navigator.userAgent);
+}
+
 function getInstallHelp(): InstallHelp {
   const ua = navigator.userAgent;
   const isIOS = /iPhone|iPad|iPod/i.test(ua);
@@ -119,13 +124,13 @@ function DownloadIcon() {
 
 export default function InstallAppButton() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [installed, setInstalled] = useState(false);
   const [help, setHelp] = useState<InstallHelp | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [hideInstall, setHideInstall] = useState(true);
 
   useEffect(() => {
     setMounted(true);
-    setInstalled(isStandalone());
+    setHideInstall(isStandalone() || isNativeClient());
 
     const onBeforeInstall = (event: Event) => {
       event.preventDefault();
@@ -133,8 +138,9 @@ export default function InstallAppButton() {
     };
 
     const onInstalled = () => {
-      setInstalled(true);
       setDeferredPrompt(null);
+      setHelp(null);
+      setHideInstall(true);
     };
 
     window.addEventListener("beforeinstallprompt", onBeforeInstall);
@@ -165,11 +171,12 @@ export default function InstallAppButton() {
   }, [help]);
 
   async function install() {
-    if (deferredPrompt && !installed && !isStandalone()) {
+    if (deferredPrompt && !isStandalone()) {
       try {
         await deferredPrompt.prompt();
-        await deferredPrompt.userChoice;
+        const choice = await deferredPrompt.userChoice;
         setDeferredPrompt(null);
+        if (choice.outcome === "accepted") return;
       } catch {
         // Native/PWA download dialog below remains available.
       }
@@ -177,6 +184,8 @@ export default function InstallAppButton() {
 
     setHelp(getInstallHelp());
   }
+
+  if (!mounted || hideInstall) return null;
 
   const modal = help ? (
     <div className={styles.overlay} role="presentation" onMouseDown={() => setHelp(null)}>
@@ -228,10 +237,10 @@ export default function InstallAppButton() {
     <>
       <button className={styles.installButton} type="button" onClick={() => void install()} aria-label="Download or install Goa Voice app">
         <DownloadIcon />
-        <span>{installed ? "App Options" : "Install App"}</span>
+        <span>Install App</span>
       </button>
 
-      {mounted && modal ? createPortal(modal, document.body) : null}
+      {modal ? createPortal(modal, document.body) : null}
     </>
   );
 }
