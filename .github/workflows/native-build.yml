@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - "native/**"
+      - "public/app-icon.svg"
       - ".github/workflows/native-build.yml"
 
 permissions:
@@ -37,6 +38,13 @@ jobs:
       - name: Generate Android project
         working-directory: native/android
         run: npx cap add android
+
+      - name: Generate Goa Voice Android launcher assets
+        working-directory: native/android
+        run: |
+          mkdir -p assets
+          cp ../../public/app-icon.svg assets/icon.svg
+          npx @capacitor/assets generate --android --assetPath assets --androidProject android --iconBackgroundColor '#fff9e9' --iconBackgroundColorDark '#fff9e9' --splashBackgroundColor '#fff9e9' --splashBackgroundColorDark '#fff9e9'
 
       - name: Add microphone permission
         shell: python
