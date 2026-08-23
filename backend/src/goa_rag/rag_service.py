@@ -69,6 +69,53 @@ class RagService:
     def indexed_points(self) -> int:
         return self.store.count()
 
+    def _retrieve_points(
+        self,
+        request: RagQueryRequest,
+    ):
+        """
+        Prefer same-language evidence when it exists.
+
+        English is not a translated MSMARCO-XI corpus language in this
+        project, and Hindi may be enabled before its own points are indexed.
+        The multilingual E5 dense encoder supports cross-lingual retrieval,
+        so English/Hindi can safely fall back to the complete indexed corpus
+        while the user's original query is preserved for answer generation.
+        """
+
+        limit = min(
+            request.limit,
+            self.settings.rag_top_k,
+        )
+
+        language = request.language
+
+        if language in {"gu", "hi"}:
+            points = self.retriever.search(
+                request.query,
+                language=language,
+                split=request.split,
+                limit=limit,
+            )
+
+            if points:
+                return points
+
+        if language in {"en", "hi"}:
+            return self.retriever.search(
+                request.query,
+                language=None,
+                split=request.split,
+                limit=limit,
+            )
+
+        return self.retriever.search(
+            request.query,
+            language=language,
+            split=request.split,
+            limit=limit,
+        )
+
     def query(
         self,
         request: RagQueryRequest,
@@ -131,14 +178,8 @@ class RagService:
             time.perf_counter()
         )
 
-        points = self.retriever.search(
-            request.query,
-            language=request.language,
-            split=request.split,
-            limit=min(
-                request.limit,
-                self.settings.rag_top_k,
-            ),
+        points = self._retrieve_points(
+            request
         )
 
         retrieval_end = (
