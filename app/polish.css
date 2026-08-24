@@ -12,7 +12,7 @@
 /* Header: simple, restrained, product-like. */
 .site-header {
   height: 76px;
-  background: rgba(255, 255, 255, 0.97);
+  background: rgba(255, 255, 255, 0.98);
   border-bottom: 0;
   box-shadow: 0 1px 0 rgba(31, 41, 55, 0.07);
   backdrop-filter: blur(16px);
@@ -84,18 +84,15 @@
   letter-spacing: 0.08em;
 }
 
-/* Legacy PP control must never return if stale HTML/CSS is cached. */
 .avatar {
   display: none !important;
 }
 
-/* Keep the Goa accent, but make it lighter and less decorative-heavy. */
 .goa-stripe {
   height: 4px;
   opacity: 0.96;
 }
 
-/* Professional surface treatment: fewer hard outlines, more tonal separation. */
 body .home-page .feature-tags span {
   border-color: rgba(31, 41, 55, 0.09);
   background: rgba(255, 255, 255, 0.78);
@@ -116,7 +113,6 @@ body .home-page .receipt-stamp {
   background: rgba(255, 255, 255, 0.025);
 }
 
-/* Remove decorative double-outline treatment from legacy voice card if cached. */
 .voice-card::before {
   display: none !important;
 }
@@ -142,7 +138,6 @@ input:focus-visible {
   outline-offset: 2px;
 }
 
-/* Tablet */
 @media (max-width: 900px) {
   .shell {
     width: min(100% - 32px, 1440px);
@@ -157,15 +152,23 @@ input:focus-visible {
   }
 }
 
-/* Mobile: compact native-app-style top bar. */
+/* Mobile: one finished app-bar layer below the system status bar. */
 @media (max-width: 640px) {
   .site-header {
-    height: 64px;
+    position: sticky;
+    top: 0;
+    height: calc(68px + env(safe-area-inset-top, 0px));
+    padding-top: env(safe-area-inset-top, 0px);
+    background: #ffffff;
+    border: 0;
+    box-shadow: 0 1px 0 rgba(31, 41, 55, 0.08);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 
   .header-inner {
-    height: 60px;
-    grid-template-columns: minmax(0, 1fr) auto auto;
+    height: 64px;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
     column-gap: 8px;
   }
@@ -175,6 +178,7 @@ input:focus-visible {
   }
 
   .brand {
+    justify-self: start;
     min-width: 0;
     max-width: 150px;
     gap: 8px;
@@ -182,8 +186,8 @@ input:focus-visible {
   }
 
   .brand-logo {
-    width: 35px;
-    height: 35px;
+    width: 36px;
+    height: 36px;
     border-radius: 10px;
   }
 
@@ -193,40 +197,60 @@ input:focus-visible {
 
   .brand-copy strong {
     display: block;
-    max-width: 86px;
+    max-width: 88px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     font-size: 13px;
+    line-height: 1.15;
   }
 
   .brand-copy small {
     display: none;
   }
 
+  /* Hard-reset the old floating mobile nav from globals.css. */
   .nav {
-    justify-self: end;
-    height: 100%;
+    position: static !important;
+    left: auto !important;
+    right: auto !important;
+    top: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+    justify-self: center;
+    width: auto !important;
+    height: auto;
     display: flex;
     align-items: center;
+    gap: 0;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0;
+    background: transparent !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    z-index: auto;
   }
 
   .nav a,
   .nav a[aria-current="page"] {
-    min-width: 42px;
-    min-height: 34px;
-    padding: 0 8px;
-    border-radius: 8px;
-    background: transparent;
-    box-shadow: none;
+    min-width: 58px;
+    min-height: 36px;
+    padding: 0 13px;
+    border: 1px solid rgba(31, 41, 55, 0.10);
+    border-radius: 11px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.035);
     color: #17483d;
-    font-size: 11px;
+    font-size: 11.5px;
     font-weight: 700;
   }
 
   .nav a:hover,
   .nav a:focus-visible {
-    background: rgba(8, 102, 60, 0.055);
+    background: #f7faf8;
+    border-color: rgba(8, 102, 60, 0.18);
   }
 
   .header-actions {
@@ -252,29 +276,29 @@ input:focus-visible {
 
 @media (max-width: 420px) {
   .header-inner {
-    column-gap: 5px;
+    column-gap: 6px;
   }
 
   .brand {
-    max-width: 124px;
+    max-width: 126px;
   }
 
   .brand-logo {
-    width: 33px;
-    height: 33px;
+    width: 34px;
+    height: 34px;
   }
 
   .brand-copy strong {
-    max-width: 72px;
+    max-width: 74px;
     font-size: 12px;
   }
 
   .nav a,
   .nav a[aria-current="page"] {
-    min-width: 38px;
-    min-height: 32px;
-    padding: 0 6px;
-    font-size: 10.5px;
+    min-width: 54px;
+    min-height: 34px;
+    padding: 0 11px;
+    font-size: 11px;
   }
 }
 
@@ -284,10 +308,16 @@ input:focus-visible {
   }
 
   .brand {
-    max-width: 104px;
+    max-width: 106px;
   }
 
   .brand-copy strong {
-    max-width: 54px;
+    max-width: 56px;
+  }
+
+  .nav a,
+  .nav a[aria-current="page"] {
+    min-width: 50px;
+    padding-inline: 9px;
   }
 }
