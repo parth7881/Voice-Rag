@@ -134,15 +134,6 @@ body .home-page .receipt-stamp {
   outline: none;
 }
 
-/* Make the suggestion section label visually proportional to the UI. */
-.try-label {
-  color: #176b57 !important;
-  font-size: 14px !important;
-  line-height: 1.2 !important;
-  font-weight: 800 !important;
-  letter-spacing: 0.015em !important;
-}
-
 button:focus-visible,
 a:focus-visible,
 select:focus-visible,
@@ -169,13 +160,14 @@ input:focus-visible {
 /* Mobile: compact native-app-style top bar. */
 @media (max-width: 640px) {
   .site-header {
-    height: 66px;
+    height: 64px;
   }
 
   .header-inner {
-    height: 62px;
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-    gap: 8px;
+    height: 60px;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    column-gap: 8px;
   }
 
   .shell {
@@ -184,12 +176,14 @@ input:focus-visible {
 
   .brand {
     min-width: 0;
+    max-width: 150px;
     gap: 8px;
+    overflow: hidden;
   }
 
   .brand-logo {
-    width: 36px;
-    height: 36px;
+    width: 35px;
+    height: 35px;
     border-radius: 10px;
   }
 
@@ -199,7 +193,7 @@ input:focus-visible {
 
   .brand-copy strong {
     display: block;
-    max-width: 88px;
+    max-width: 86px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -211,22 +205,34 @@ input:focus-visible {
   }
 
   .nav {
-    justify-self: center;
+    justify-self: end;
+    height: 100%;
+    display: flex;
+    align-items: center;
   }
 
-  .nav a {
-    min-width: 54px;
+  .nav a,
+  .nav a[aria-current="page"] {
+    min-width: 42px;
     min-height: 34px;
-    padding: 0 13px;
+    padding: 0 8px;
+    border-radius: 8px;
+    background: transparent;
+    box-shadow: none;
+    color: #17483d;
     font-size: 11px;
-    background: #f5f8f6;
-    box-shadow: inset 0 0 0 1px rgba(31, 41, 55, 0.07);
+    font-weight: 700;
+  }
+
+  .nav a:hover,
+  .nav a:focus-visible {
+    background: rgba(8, 102, 60, 0.055);
   }
 
   .header-actions {
     justify-self: end;
     min-width: 0;
-    gap: 6px;
+    gap: 0;
   }
 
   .goa-stripe {
@@ -242,22 +248,46 @@ input:focus-visible {
     padding: 6px 10px;
     font-size: 10px;
   }
-
-  .try-label {
-    font-size: 13.5px !important;
-  }
 }
 
-@media (max-width: 380px) {
+@media (max-width: 420px) {
+  .header-inner {
+    column-gap: 5px;
+  }
+
+  .brand {
+    max-width: 124px;
+  }
+
+  .brand-logo {
+    width: 33px;
+    height: 33px;
+  }
+
   .brand-copy strong {
-    max-width: 68px;
+    max-width: 72px;
     font-size: 12px;
   }
 
-  .nav a {
-    min-width: 48px;
+  .nav a,
+  .nav a[aria-current="page"] {
+    min-width: 38px;
     min-height: 32px;
-    padding: 0 11px;
+    padding: 0 6px;
     font-size: 10.5px;
+  }
+}
+
+@media (max-width: 360px) {
+  .shell {
+    width: calc(100% - 18px);
+  }
+
+  .brand {
+    max-width: 104px;
+  }
+
+  .brand-copy strong {
+    max-width: 54px;
   }
 }
